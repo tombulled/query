@@ -1,9 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
-from typing import Any, Callable, ClassVar, Generic, List, Optional, Type, TypeVar
+from typing import Any, Callable, ClassVar, Generic, List, Optional, TypeVar
 from typing_extensions import Self
 
-from query.constants import OPERATOR_PREFIX
 from query.errors import ParsingError
 from query.models import QueryPart
 
@@ -17,30 +16,19 @@ class QueryOperator(ABC, Generic[T]):
     operator: ClassVar[str]
     operand: T
 
-    # def __init__(self, operand: T, /) -> None:
-    #     self.operand = operand
-
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.operand!r})"
 
-    # @classmethod
-    # @property
-    # def key(cls) -> str:
-    #     return OPERATOR_PREFIX + cls.operator
-
-    # def validate(self) -> None: ...
-
-    # @staticmethod
-    # def parse(value: Any) -> T:
-    #     ...
-
-    # @abstractclassmethod
-
-    # @classmethod
-    @staticmethod
-    # @abstractmethod
-    def parse(value: Any, parse_expression: Callable[[Expression], QueryPart], /) -> T:
-        return value
+    @classmethod
+    def parse(
+        cls,
+        value: Any,
+        field: Optional[str],
+        parse_expression: Callable[[Expression], QueryPart],
+        /,
+    ) -> Self:
+        assert field is None
+        return cls(operand=value)
 
 
 @dataclass
@@ -66,6 +54,10 @@ class Eq(ComparisonQueryOperator[Value]):
 
     def __str__(self) -> str:
         return f"{self.field}={self.operand!r}"
+
+    @classmethod
+    def parse(cls, value: Any, field, _, /) -> Self:
+        return cls(field=field, operand=value)
 
 
 class Gt(ComparisonQueryOperator[Value]):
@@ -106,16 +98,27 @@ class LogicalQueryOperator(QueryOperator[T], Generic[T]):
 class And(LogicalQueryOperator[List[QueryPart]]):
     operator = "and"
 
+    def __str__(self) -> str:
+        expression: str = f" {self.operator} ".join(map(str, self.operand))
+
+        return f"({expression})"
+
     @classmethod
     def parse(
-        cls, value: Any, parse_expression: Callable[[Expression], QueryPart], /
-    ) -> List[QueryPart]:
+        cls,
+        value: Any,
+        field,
+        parse_expression: Callable[[Expression, Optional[str]], QueryPart],
+        /,
+    ) -> Self:
         if not isinstance(value, list):
             raise ParsingError(
                 f"{cls.operator!r} operator expected value of type {list}, got {type(value)}"
             )
 
-        return [parse_expression(expression) for expression in value]
+        return cls(
+            operand=[parse_expression(expression, field) for expression in value]
+        )
 
 
 # class Not(LogicalQueryOperator[OperatorExpression]):
@@ -137,10 +140,10 @@ class Exists(FieldQueryOperator[bool]):
     operator = "exists"
 
     @classmethod
-    def parse(cls, value: Any, _, /) -> bool:
+    def parse(cls, value: Any, field: str, _, /) -> Self:
         if not isinstance(value, bool):
             raise ParsingError(
                 f"{cls.operator!r} operator expected value of type {bool}, got {type(value)}"
             )
 
-        return value
+        return cls(field=field, operand=value)

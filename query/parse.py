@@ -1,63 +1,58 @@
-import dataclasses
-from typing import Dict, Mapping, Sequence
+from typing import Dict, Mapping, Optional, Sequence
 
-from query.models import QueryPart
 from query.types import Expression
 
-from . import operators
+from .operators import (
+    And,
+    Eq,
+    Exists,
+    Gt,
+    Gte,
+    In,
+    Lt,
+    Lte,
+    Ne,
+    Nin,
+    Nor,
+    Or,
+    QueryOperator,
+)
 
-
-def parse_value(value):
-    return value
-
-
-def parse_values(values):
-    return values
-
-
-def parse_boolean(value):
-    assert isinstance(value, bool)
-
-    return value
-
-
-def parse_expressions(expressions):
-    return [parse(expression) for expression in expressions]
-
-
-parsers = {
+ops = {
     # Comparison Query Operators
-    operators.Eq.operator: operators.Eq.parse,
-    operators.Gt.operator: operators.Gt.parse,
-    operators.Gte.operator: operators.Gte.parse,
-    operators.In.operator: operators.In.parse,
-    operators.Lt.operator: operators.Lt.parse,
-    operators.Lte.operator: operators.Lte.parse,
-    operators.Ne.operator: operators.Ne.parse,
-    operators.Nin.operator: operators.Nin.parse,
+    Eq.operator: Eq,
+    Gt.operator: Gt,
+    Gte.operator: Gte,
+    In.operator: In,
+    Lt.operator: Lt,
+    Lte.operator: Lte,
+    Ne.operator: Ne,
+    Nin.operator: Nin,
     # Logical Query Operators
-    operators.And.operator: operators.And.parse,
-    # operators.Not.operator: operators.Not.parse,
-    operators.Nor.operator: operators.Nor.parse,
-    operators.Or.operator: operators.Or.parse,
+    And.operator: And,
+    # Not.operator: Not,
+    Nor.operator: Nor,
+    Or.operator: Or,
     # Element Query Operators
-    operators.Exists.operator: operators.Exists.parse,
+    Exists.operator: Exists,
     # "type": parse_type,
 }
 
 
-def parse_value_or_expression(obj) -> QueryPart:
+def parse_value_or_expression(field, obj) -> QueryOperator:
     if isinstance(obj, Dict):
         # If it's a literal map (no operators), return it.
         if not any(k.startswith("$") for k in obj.keys()):
-            return QueryPart(operator="eq", operand=obj)
+            return Eq(field=field, operand=obj)
 
-        return parse(obj)
+        return parse(obj, field=field)
     else:
         # Literal value
-        return QueryPart(operator="eq", operand=obj)
+        # return QueryOperator(operand=obj)
+        return Eq(field=field, operand=obj)
 
-def parse(expression: Expression) -> QueryPart:
+
+def parse(expression: Expression, field: Optional[str] = None) -> QueryOperator:
     if not isinstance(expression, Mapping):
         raise Exception("Expression is not a map")
 
@@ -79,8 +74,15 @@ def parse(expression: Expression) -> QueryPart:
     # If the key is an operator, we're already explicit, recurse.
     if key.startswith("$"):
         operator: str = key[1:]
-        parser = parsers[operator]
-        return QueryPart(operator=operator, operand=parser(value, parse))
+        op = ops[operator]
+        # return QueryOperator(operator=operator, operand=parser(value, parse))
+        # return op(operand=op.parse(value, None, parse))
+        return op.parse(value, field, parse)
 
-    query_part = parse_value_or_expression(value)
-    return dataclasses.replace(query_part, field=key)
+    # The key is a field, so we need to parse the value.
+    # If the value is an operator, we need to push the field.
+    # If the operator is logical, we need to push the field to
+    # all of the logical operator's operands
+    query_part = parse_value_or_expression(key, value)
+    # query_part.field = key
+    return query_part
