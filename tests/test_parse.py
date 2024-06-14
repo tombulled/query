@@ -1,8 +1,8 @@
-from query import parse_expression
+from query import parse
 
 
-def test_make_explicit() -> None:
-    assert parse_expression({"$exists": True}) == {"operator": "exists", "data": True}
+def test_parse() -> None:
+    assert parse({"$exists": True}) == {"operator": "exists", "data": True}
     # assert parse_expression({"name": {"$eq": "bob"}}) == {
     #     "operator": "eq",
     #     "data": {"field": "name", "value": "bob"},
