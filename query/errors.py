@@ -1,1 +1,5 @@
-class ParsingError(Exception): pass
+__all__ = ("ParsingError",)
+
+
+class ParsingError(Exception):
+    pass

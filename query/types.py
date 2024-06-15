@@ -1,7 +1,5 @@
-from typing import Any, List, Mapping
+from typing import Mapping, TypeAlias
+from typing_extensions import Never
 
-Field = str
-Value = Any
-Values = List[Value]
-Expression = Mapping[str, Any]  # WARN: Currently using Any
-Expressions = List[Expression]
+
+NoData: TypeAlias = Mapping[Never, Never]
