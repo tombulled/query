@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Final
+from dataclasses import dataclass
+from typing import Any, ClassVar, Final, Optional, final
 
 from typing_extensions import Self
 
@@ -46,18 +47,33 @@ class AlwaysTrue(NoValueExpression):
 class AlwaysFalse(NoValueExpression):
     type: Final[ExpressionType] = ExpressionType.ALWAYS_FALSE
 
+@dataclass
+class FieldExpression(Expression, ABC):
+    """
+    A FieldExpression is an expression that acts on a field with syntax like:
+        "field": {$operator: ...}
+    """
+    field: Optional[str]
 
-# class Exists(Expression):
-#     type: Final[ExpressionType] = ExpressionType.EXISTS
-#     exists: bool
+    @abstractmethod
+    def serialise_rhs(self) -> Any:
+        raise NotImplementedError
 
-#     def __init__(self, exists: bool, /) -> None:
-#         self.exists = exists
+    @final
+    def serialise(self) -> Any:
+        return {self.field: self.serialise_rhs()}
 
-#     @staticmethod
-#     def parse(data: Any, /) -> Self:
-#         assert isinstance(data, bool)
-#         return Exists(data)
+@dataclass
+class Exists(FieldExpression):
+    # type: Final[ExpressionType] = ExpressionType.EXISTS
+    type: ClassVar[ExpressionType] = ExpressionType.EXISTS
+    exists: bool
 
-#     def serialise(self) -> Any:
-#         return {OPERATOR_PREFIX + self.type.value: self.exists}
+    @staticmethod
+    def parse(data: Any, /) -> Self:
+        if not isinstance(data, bool):
+            raise ParsingError(f"Expected data of type {bool}, got {type(data)}")
+        return Exists(data)
+
+    def serialise_rhs(self) -> Any:
+        return {OPERATOR_PREFIX + self.type.value: self.exists}

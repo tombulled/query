@@ -1,5 +1,5 @@
-# from query.expression import Exists
+from query.expression import Exists
 from query.expression import AlwaysTrue
 
-# d = Exists(True)
-d = AlwaysTrue()
+d = Exists("name", True)
+# d = AlwaysTrue()
