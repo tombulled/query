@@ -4,10 +4,10 @@ from typing import Any, ClassVar, Final, Optional, final
 
 from typing_extensions import Self
 
-from query.constants import NO_DATA, OPERATOR_PREFIX
+from query.constants import NO_VALUE, OPERATOR_PREFIX
 from query.enums import ExpressionType
 from query.errors import ParsingError
-from query.types import NoData
+from query.types import NoValue
 
 
 class Expression(ABC):
@@ -18,7 +18,7 @@ class Expression(ABC):
 
     @staticmethod
     @abstractmethod
-    def parse(self, data: Any, /) -> Self:
+    def parse(self, value: Any, /) -> Self:
         raise NotImplementedError
 
     @abstractmethod
@@ -31,13 +31,13 @@ class NoValueExpression(Expression):
         return f"{type(self).__name__}()"
 
     @staticmethod
-    def parse(data: Any, /) -> Self:
-        if data != NO_DATA:
-            raise ParsingError(f"Expected no data, got {data!r}")
+    def parse(value: Any, /) -> Self:
+        if value != NO_VALUE:
+            raise ParsingError(f"Expected no value, got {value!r}")
         return AlwaysTrue()
 
-    def serialise(self) -> NoData:
-        return {OPERATOR_PREFIX + self.type.value: NO_DATA}
+    def serialise(self) -> NoValue:
+        return {OPERATOR_PREFIX + self.type.value: NO_VALUE}
 
 
 class AlwaysTrue(NoValueExpression):
@@ -47,12 +47,14 @@ class AlwaysTrue(NoValueExpression):
 class AlwaysFalse(NoValueExpression):
     type: Final[ExpressionType] = ExpressionType.ALWAYS_FALSE
 
+
 @dataclass
 class FieldExpression(Expression, ABC):
     """
     A FieldExpression is an expression that acts on a field with syntax like:
         "field": {$operator: ...}
     """
+
     field: Optional[str]
 
     @abstractmethod
@@ -62,6 +64,7 @@ class FieldExpression(Expression, ABC):
     @final
     def serialise(self) -> Any:
         return {self.field: self.serialise_rhs()}
+
 
 @dataclass
 class Exists(FieldExpression):

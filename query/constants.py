@@ -1,5 +1,5 @@
 from typing import Final
-from query.types import NoData
+from query.types import NoValue
 
-NO_DATA: Final[NoData] = {}
+NO_VALUE: Final[NoValue] = {}
 OPERATOR_PREFIX: Final[str] = "$"
