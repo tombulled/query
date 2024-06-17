@@ -1,19 +1,29 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, ClassVar, Final, Optional, final
+from typing import Any, ClassVar, Final, Generic, Optional, TypeVar, final
 
 from typing_extensions import Self
 
 from query.constants import NO_VALUE, OPERATOR_PREFIX
 from query.enums import ExpressionType
 from query.errors import ParsingError
-from query.types import NoValue
+from query.types import Expression, NoValue
+
+T = TypeVar("T")
+
+
+def build_expression(operator: str, value: Optional[Any] = None) -> Expression:
+    return {OPERATOR_PREFIX + operator: value if value is not None else NO_VALUE}
 
 
 class Expression(ABC):
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}()"
+
     @property
     @abstractmethod
-    def type(self) -> ExpressionType:
+    # def type(self) -> ExpressionType:
+    def type(self) -> str:
         pass
 
     @staticmethod
@@ -27,9 +37,6 @@ class Expression(ABC):
 
 
 class NoValueExpression(Expression):
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}()"
-
     @staticmethod
     def parse(value: Any, /) -> Self:
         if value != NO_VALUE:
@@ -37,7 +44,7 @@ class NoValueExpression(Expression):
         return AlwaysTrue()
 
     def serialise(self) -> NoValue:
-        return {OPERATOR_PREFIX + self.type.value: NO_VALUE}
+        return build_expression(self.type.value)
 
 
 class AlwaysTrue(NoValueExpression):
@@ -52,7 +59,7 @@ class AlwaysFalse(NoValueExpression):
 class FieldExpression(Expression, ABC):
     """
     A FieldExpression is an expression that acts on a field with syntax like:
-        "field": {$operator: ...}
+        "field": {"$operator": ...}
     """
 
     field: Optional[str]
@@ -68,7 +75,6 @@ class FieldExpression(Expression, ABC):
 
 @dataclass
 class Exists(FieldExpression):
-    # type: Final[ExpressionType] = ExpressionType.EXISTS
     type: ClassVar[ExpressionType] = ExpressionType.EXISTS
     exists: bool
 
@@ -79,4 +85,16 @@ class Exists(FieldExpression):
         return Exists(data)
 
     def serialise_rhs(self) -> Any:
-        return {OPERATOR_PREFIX + self.type.value: self.exists}
+        return build_expression(self.type.value, self.exists)
+
+@dataclass
+class Eq(FieldExpression, Generic[T]):
+    type: ClassVar[ExpressionType] = ExpressionType.EQ
+    value: T
+
+    @staticmethod
+    def parse(data: T, /) -> "Eq[T]":
+        return Eq(data)
+
+    def serialise_rhs(self) -> Any:
+        return build_expression(self.type.value, self.value)
