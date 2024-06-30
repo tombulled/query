@@ -1,5 +1,8 @@
-from typing import Any, Generic, Mapping, TypeVar
+from abc import ABC, abstractmethod
+from typing import Any, Generic, Mapping, Optional, Type, TypeVar
+
 import humps
+from typing_extensions import Self
 
 from query.constants import NO_VALUE
 from query.types import NoValue
@@ -9,7 +12,7 @@ Expr = Mapping[str, Any]
 T = TypeVar("T")
 
 
-class Expression(Generic[T]):
+class Expression(ABC, Generic[T]):
     value: T
 
     def __init__(self, value: T, /) -> None:
@@ -26,7 +29,11 @@ class Expression(Generic[T]):
     def key(self) -> str:
         return "$" + self.name
 
-    # def parse(self, expression: Expr, /) -> Self:
+    @classmethod
+    @abstractmethod
+    def parse(cls: Type[Self], value: Any, /) -> Self:
+        # return cls(value)
+        raise NotImplementedError
 
     def ser(self) -> Expr:
         return {self.key: self.value}
@@ -36,11 +43,22 @@ class NoValueExpression(Expression[NoValue]):
     def __init__(self) -> None:
         super().__init__(NO_VALUE)
 
+    @classmethod
+    def parse(cls: Type[Self], value: Any) -> Self:
+        assert value == NO_VALUE
+
+        return cls()
+
 
 class FieldExpression(Expression[T]):
-    field: str
+    """
+    A FieldExpression is an expression that acts on a field with syntax like:
+        "field": {"$operator": ...}
+    """
 
-    def __init__(self, field: str, value: T) -> None:
+    field: Optional[str]
+
+    def __init__(self, field: Optional[str], value: T) -> None:
         super().__init__(value)
 
         self.field = field
@@ -48,16 +66,23 @@ class FieldExpression(Expression[T]):
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.field!r}, {self.value!r})"
 
-    def ser(self) -> str:
+    def ser(self) -> Expr:
         return {self.field: super().ser()}
 
 
 class Eq(FieldExpression[T]):
-    pass
+    @classmethod
+    def parse(cls: Type[Self], value: Any, /) -> Self:
+        raise NotImplementedError # Don't know what `T` is yet :/
 
 
+# class Exists(FieldExpression[bool]):
 class Exists(Expression[bool]):
-    pass
+    @classmethod
+    def parse(cls: Type[Self], value: Any, /) -> Self:
+        assert isinstance(value, bool)
+
+        return cls(value)
 
 
 class AlwaysTrue(NoValueExpression):
@@ -68,7 +93,13 @@ class AlwaysFalse(NoValueExpression):
     pass
 
 
+# {"$alwaysTrue": {}}
+# {"name": {"$exists": True}}
+
+# e = Exists("name", False)
 e = Exists(False)
 at = AlwaysTrue()
 af = AlwaysFalse()
 eq = Eq("name", "bob")
+e2 = Exists.parse(True)
+at2 = AlwaysTrue.parse({})
