@@ -1,6 +1,7 @@
 from typing import Annotated, Any, Generator, Generic, TypeVar
 
-from pydantic import BaseModel, PlainValidator
+import humps
+from pydantic import BaseModel, Field, PlainValidator
 
 from query.constants import NO_VALUE
 from query.types import NoValue
@@ -16,6 +17,17 @@ def _validate_no_value(v: Any) -> NoValue:
 ValidatedNoValue = Annotated[NoValue, PlainValidator(_validate_no_value)]
 
 
+class classproperty:
+    def __init__(self, method=None):
+        self.fget = method
+
+    def __get__(self, instance, cls=None):
+        return self.fget(cls)
+
+    def getter(self, method):
+        self.fget = method
+        return self
+
 class Expression(BaseModel, Generic[T]):
     value: T
 
@@ -25,12 +37,18 @@ class Expression(BaseModel, Generic[T]):
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.value!r})"
 
-    def __rich_repr__(self) -> Generator[T, None, None]:
-        yield self.value
+    # def __rich_repr__(self) -> Generator[T, None, None]:
+    #     yield self.value
+
+    # @property
+    @classproperty
+    def name(cls) -> str:
+        return humps.camelize(cls.__name__)
 
 
 class NoValueExpression(Expression[ValidatedNoValue]):
     pass
+    # value: ValidatedNoValue = Field(default_factory=lambda: NO_VALUE)
     # def __init__(self) -> None:
     #     super().__init__(NO_VALUE)
 

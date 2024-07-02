@@ -7,6 +7,12 @@ from typing_extensions import Self
 from query.constants import NO_VALUE
 from query.types import NoValue
 
+"""
+{"$exists": True}
+{"$eq": "bob"}
+{"$and": [{"$exists": True}, {"$eq": "bob"}]}
+"""
+
 Expr = Mapping[str, Any]
 
 T = TypeVar("T")
@@ -32,10 +38,12 @@ class Expression(ABC, Generic[T]):
     @classmethod
     @abstractmethod
     def parse(cls: Type[Self], value: Any, /) -> Self:
-        # return cls(value)
         raise NotImplementedError
 
-    def ser(self) -> Expr:
+    def validate(self) -> None:
+        pass
+
+    def serialise(self) -> Expr:
         return {self.key: self.value}
 
 
@@ -66,23 +74,26 @@ class FieldExpression(Expression[T]):
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.field!r}, {self.value!r})"
 
-    def ser(self) -> Expr:
-        return {self.field: super().ser()}
+    def serialise(self) -> Expr:
+        return {self.field: super().serialise()}
+
+    def validate(self) -> None:
+        assert self.field is not None
 
 
-class Eq(FieldExpression[T]):
+class Eq(FieldExpression[Any]):
     @classmethod
     def parse(cls: Type[Self], value: Any, /) -> Self:
-        raise NotImplementedError # Don't know what `T` is yet :/
+        return cls(None, value)
 
 
-# class Exists(FieldExpression[bool]):
-class Exists(Expression[bool]):
+class Exists(FieldExpression[bool]):
+    # class Exists(Expression[bool]):
     @classmethod
     def parse(cls: Type[Self], value: Any, /) -> Self:
         assert isinstance(value, bool)
 
-        return cls(value)
+        return cls(None, value)
 
 
 class AlwaysTrue(NoValueExpression):
@@ -93,11 +104,16 @@ class AlwaysFalse(NoValueExpression):
     pass
 
 
+def exists(field: str, exists: bool) -> Exists:
+    return Exists(field, exists)
+
+
 # {"$alwaysTrue": {}}
 # {"name": {"$exists": True}}
 
 # e = Exists("name", False)
-e = Exists(False)
+e = exists("name", False)
+# e = Exists(False)
 at = AlwaysTrue()
 af = AlwaysFalse()
 eq = Eq("name", "bob")
