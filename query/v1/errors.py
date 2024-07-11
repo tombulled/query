@@ -1,1 +1,2 @@
-class ParsingError(Exception): pass
+class ParsingError(Exception):
+    pass

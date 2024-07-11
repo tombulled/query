@@ -2,6 +2,7 @@ from enum import Enum
 
 __all__ = ("ExpressionType",)
 
+
 class ExpressionType(Enum):
     # Comparison Operators
     EQ: str = "eq"

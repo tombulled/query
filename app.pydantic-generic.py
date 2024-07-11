@@ -28,6 +28,7 @@ class classproperty:
         self.fget = method
         return self
 
+
 class Expression(BaseModel, Generic[T]):
     value: T
 

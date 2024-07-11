@@ -1,100 +1,102 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any, ClassVar, Final, Generic, Optional, TypeVar, final
+from abc import ABC
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
-from typing_extensions import Self
+import humps
+from pydantic import (
+    BaseModel,
+    Field,
+    GetCoreSchemaHandler,
+    PlainValidator,
+    model_serializer,
+)
+from pydantic_core import (
+    CoreSchema,
+    PydanticUndefined,
+    core_schema,
+    PydanticUndefinedType,
+)
 
-from query.constants import NO_VALUE, OPERATOR_PREFIX
-from query.enums import ExpressionType
-from query.errors import ParsingError
-from query.types import Expression, NoValue
+from query.constants import NO_VALUE
+from query.types import NoValue
 
 T = TypeVar("T")
 
 
-def build_expression(operator: str, value: Optional[Any] = None) -> Expression:
-    return {OPERATOR_PREFIX + operator: value if value is not None else NO_VALUE}
+def _validate_no_value(value: Any, /) -> NoValue:
+    assert value == NO_VALUE
+    return value
 
 
-class Expression(ABC):
+ValidatedNoValue = Annotated[NoValue, PlainValidator(_validate_no_value)]
+
+E = TypeVar("E", bound="Type[Expression]")
+
+
+def expression(key: str, /) -> Callable[[E], E]:
+    def wrapper(cls: E, /) -> E:
+        setattr(cls, "key", key)
+
+        return cls
+
+    return wrapper
+
+
+# class Expression(BaseModel, ABC, Generic[T]):
+class Expression(BaseModel, Generic[T]):
+    value: T = Field(kw_only=False)
+
+    # WARN: Custom constructors are not inherited :(
+    def __init__(self, value: T, /) -> None:
+        super().__init__(value=value)
+
     def __repr__(self) -> str:
-        return f"{type(self).__name__}()"
+        return f"{type(self).__name__}({self.value!r})"
 
-    @property
-    @abstractmethod
-    # def type(self) -> ExpressionType:
-    def type(self) -> str:
-        pass
+    def __repr_args__(self) -> Iterable[Tuple[str | None, Any]]:
+        return ((None, self.value),)
 
-    @staticmethod
-    @abstractmethod
-    def parse(self, value: Any, /) -> Self:
-        raise NotImplementedError
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: GetCoreSchemaHandler
+    ) -> CoreSchema:
+        # print(f"Expression.__get_pydantic_core_schema__:", cls, source_type, handler)
 
-    @abstractmethod
-    def serialise(self) -> Any:
-        raise NotImplementedError
+        def _validate_expression(v):
+            # print(f"Validating expression: {v!r}")
+            return v
 
+        # return core_schema.no_info_after_validator_function(_validate_expression, handler(str))
+        return core_schema.no_info_before_validator_function(
+            _validate_expression, handler(source_type)
+        )
 
-class NoValueExpression(Expression):
-    @staticmethod
-    def parse(value: Any, /) -> Self:
-        if value != NO_VALUE:
-            raise ParsingError(f"Expected no value, got {value!r}")
-        return AlwaysTrue()
+    # @classmethod
+    # def of(cls, value: T, /):
+    #     return cls(value=value)
 
-    def serialise(self) -> NoValue:
-        return build_expression(self.type.value)
-
-
-class AlwaysTrue(NoValueExpression):
-    type: Final[ExpressionType] = ExpressionType.ALWAYS_TRUE
+    @model_serializer(mode="wrap")
+    def serialize(self, handler) -> Dict[str, Any]:
+        return {humps.camelize(type(self).__name__): handler(self)}
 
 
-class AlwaysFalse(NoValueExpression):
-    type: Final[ExpressionType] = ExpressionType.ALWAYS_FALSE
+@expression("nov")
+class NoValueExpression(Expression[ValidatedNoValue]):
+    value: ValidatedNoValue = Field(default_factory=lambda: NO_VALUE)
 
-
-@dataclass
-class FieldExpression(Expression, ABC):
-    """
-    A FieldExpression is an expression that acts on a field with syntax like:
-        "field": {"$operator": ...}
-    """
-
-    field: Optional[str]
-
-    @abstractmethod
-    def serialise_rhs(self) -> Any:
-        raise NotImplementedError
-
-    @final
-    def serialise(self) -> Any:
-        return {self.field: self.serialise_rhs()}
-
-
-@dataclass
-class Exists(FieldExpression):
-    type: ClassVar[ExpressionType] = ExpressionType.EXISTS
-    exists: bool
-
-    @staticmethod
-    def parse(data: Any, /) -> Self:
-        if not isinstance(data, bool):
-            raise ParsingError(f"Expected data of type {bool}, got {type(data)}")
-        return Exists(data)
-
-    def serialise_rhs(self) -> Any:
-        return build_expression(self.type.value, self.exists)
-
-@dataclass
-class Eq(FieldExpression, Generic[T]):
-    type: ClassVar[ExpressionType] = ExpressionType.EQ
-    value: T
-
-    @staticmethod
-    def parse(data: T, /) -> "Eq[T]":
-        return Eq(data)
-
-    def serialise_rhs(self) -> Any:
-        return build_expression(self.type.value, self.value)
+    def __init__(
+        self, value: Union[NoValue, PydanticUndefinedType] = PydanticUndefined, /
+    ) -> None:
+        super().__init__(
+            value if not isinstance(value, PydanticUndefinedType) else NO_VALUE
+        )

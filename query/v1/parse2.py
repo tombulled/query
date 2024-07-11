@@ -5,6 +5,7 @@ expression_classes = {
     EqualityMatchExpression.k_name: EqualityMatchExpression,
 }
 
+
 def parse_value_or_expression(field, obj):
     return NotImplemented
     # if isinstance(obj, Dict):
@@ -17,6 +18,7 @@ def parse_value_or_expression(field, obj):
     #     # Literal value
     #     # return QueryOperator(operand=obj)
     #     return Eq(field=field, operand=obj)
+
 
 def parse(expression) -> MatchExpression:
     if not isinstance(expression, Mapping):

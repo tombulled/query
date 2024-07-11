@@ -185,7 +185,7 @@ class MatchExpression(Iterable["MatchExpression"]):
     @abstractmethod
     def serialise(self) -> Any:  # TODO: Type other than Any?
         raise NotImplementedError
-    
+
     @staticmethod
     @abstractmethod
     def parse(self, v):
@@ -301,7 +301,7 @@ class EqualityMatchExpression(ComparisonMatchExpression[T], Generic[T]):
 
     def matches(self, document: Document) -> bool:
         return document[self.path] == self.data
-    
+
     @staticmethod
     def parse(v):
         # return v
