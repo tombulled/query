@@ -6,6 +6,10 @@ from dataclasses import dataclass
 
 Value: TypeAlias = str
 
+def validate_value(value: Any, /) -> Value:
+    return value # TEMP NOOP
+
+
 """
 
 { <operator>: [ <argument1>, <argument2> ... ] }
@@ -51,74 +55,32 @@ class StrEnum(str, Enum):
     pass
 
 class Operator(StrEnum):
+    # Comparison
     EQ = "$eq"
+    # Logical
+    AND = "$and"
 
 T = TypeVar("T")
 
-class ExpressionBuilder(Protocol):
+class ExpressionParser(Protocol):
     def __call__(self, operator: str, argument: Any, *, path: Optional[str] = None) -> "Expression":
         ...
 
-# EXPRESSION_BUILDERS = {
-#     "$eq":
+# EXPRESSIONS = {
+#     Operator.EQ: lambda
 # }
 
-# class Expression(Generic[T]):
-#     operator: str
-#     argument: T
-#     path: Optional[str]
-
-#     def __init__(self, operator: str, argument: T, *, path: Optional[str] = None) -> None:
-#         self.operator = operator
-#         self.argument = argument
-#         self.path = path
-
-#     def serialise(self, include_path: bool = True) -> SerialisedExpression:
-#         serialised: SerialisedExpression = {self.operator: self.argument}
-
-#         if include_path and self.path is not None:
-#             serialised = {self.path: serialised}
-
-#         return serialised
-
 class Expression(ABC):
-    # @abstractmethod
-    # def operator(self) -> str:
-    #     raise NotImplementedError
-
-    # def path(self) -> Optional[str]:
-    #     return None
-
     @abstractmethod
-    # def serialise(self, include_path: bool = True) -> SerialisedExpression:
     def serialise(self) -> SerialisedExpression:
         raise NotImplementedError
 
-# class EqExpression(Expression)
-#     # @staticmethod
-#     def operator(self) -> str:
-#         return "$eq"
-
-#     def serialise(self) -> SerialisedExpression:
-#         return {}
-
-
-
-# class AlwaysBooleanExpression(Expression):
-#     pass
-
-# class AlwaysTrueExpression(AlwaysBooleanExpression):
-#     pass
-
 class MyExpression(Expression):
-    # def serialise(self, include_path: bool = True) -> SerialisedExpression:
     def serialise(self) -> SerialisedExpression:
         return {"$myExpression": "some-value"}
 
-EQ = "$eq"
-
 @dataclass(frozen=True)
-class Eq:
+class Eq(Expression):
     value: Value
     field: Optional[str] = None
 
@@ -131,15 +93,19 @@ class Eq:
         return f"{type(self).__name__}({self})"
 
     def serialise(self) -> SerialisedExpression:
-        serialised: SerialisedExpression = {EQ: self.value}
+        serialised: SerialisedExpression = {Operator.EQ: self.value}
 
         if self.field is not None:
             serialised = {self.field: serialised}
 
         return serialised
 
-# name_eq_tom = Expression("$eq", "tom", path="name")
-# e = name_eq_tom
-#
+    @staticmethod
+    def parse(operator: str, argument: Any, *, path: Optional[str] = None) -> "Expression":
+        assert path is not None
+        value: Value = validate_value(argument)
+
+        return Eq(field=path, value=value)
+
 e = Eq("bob")
 e2 = Eq("bob", "name")
