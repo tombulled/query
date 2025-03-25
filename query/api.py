@@ -6,8 +6,10 @@ from .types import SerialisedExpression
 
 T = TypeVar("T")
 
+
 class StrEnum(str, Enum):
     pass
+
 
 # class Operator(StrEnum):
 #     # Comparison
@@ -17,8 +19,10 @@ class StrEnum(str, Enum):
 
 
 class ExpressionParser(Protocol):
-    def __call__(self, operator: str, argument: Any, *, path: Optional[str] = None) -> "Expression":
-        ...
+    def __call__(
+        self, operator: str, argument: Any, *, field: Optional[str] = None
+    ) -> "Expression": ...
+
 
 class Expression(ABC):
     @abstractmethod

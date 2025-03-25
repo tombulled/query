@@ -6,7 +6,7 @@ EXPRESSIONS = {
     Gt.operator: Gt.parse,
 }
 
-e = Eq("bob")
-e2 = Eq("bob", "name")
-g = Gt(10)
-g2 = Gt(10, "age")
+e = Eq(None, "bob")
+e2 = Eq("name", "bob")
+g = Gt(None, 10)
+g2 = Gt("age", 10)
