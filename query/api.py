@@ -1,7 +1,7 @@
-from abc import ABC
-from abc import abstractmethod
-from typing import Any, Optional, TypeVar, Protocol
+from abc import ABC, abstractmethod
 from enum import Enum
+from typing import Any, Optional, Protocol, TypeVar
+
 from .types import SerialisedExpression
 
 T = TypeVar("T")

@@ -1,11 +1,17 @@
-from typing import Any
-from .types import Value, Number
+from typing import Any, Sequence
 
-# def validate_path()
+from .types import Number, Value
 
 
 def validate_value(value: Any, /) -> Value:
     return value
+
+
+def validate_values(value: Any, /) -> Sequence[Value]:
+    if not isinstance(value, Sequence):
+        raise TypeError
+
+    return tuple(map(validate_value, value))
 
 
 def validate_number(value: Any, /) -> Number:
@@ -13,3 +19,5 @@ def validate_number(value: Any, /) -> Number:
         raise TypeError
 
     return value
+
+# def validate_expressions(value: Any)

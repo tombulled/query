@@ -1,5 +1,4 @@
-from typing import TypeAlias, Any, Mapping
-from typing import Union
+from typing import Any, Mapping, TypeAlias, Union
 
 Number: TypeAlias = Union[int, float]
 Value: TypeAlias = Any
