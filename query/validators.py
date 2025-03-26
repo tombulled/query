@@ -2,7 +2,7 @@ from typing import Any, Callable, Sequence, TypeVar
 
 from .exceptions import ValidationError
 from .expression import Expression
-from .protocols import ExpressionParser
+from .protocols import ParseExpression
 from .types import Number, Value
 
 T = TypeVar("T")
@@ -40,12 +40,12 @@ def validate_number(value: Any, /) -> Number:
     return value
 
 
-def validate_expression(value: Any, parse: ExpressionParser, /) -> Expression:
+def validate_expression(value: Any, parse: ParseExpression, /) -> Expression:
     return parse(value)
 
 
 def validate_expressions(
-    value: Any, parse: ExpressionParser, /
+    value: Any, parse: ParseExpression, /
 ) -> Sequence[Expression]:
     return _validate_sequence(
         value, lambda item: validate_expression(item, parse)

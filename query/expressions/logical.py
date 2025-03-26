@@ -5,7 +5,7 @@ from typing_extensions import Self
 
 from ..expression import Expression
 from ..models import ExpressionInfo, SerialisationOptions
-from ..protocols import ExpressionParser
+from ..protocols import ParseExpression
 from ..types import SerialisedExpression
 from ..validators import validate_expressions
 
@@ -33,5 +33,5 @@ class And(Expression):
         return {self.operator: expressions}
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ParseExpression) -> Self:
         return cls(validate_expressions(info.argument, parse))

@@ -5,7 +5,7 @@ from typing_extensions import Self
 
 from ..expression import Expression
 from ..models import ExpressionInfo, SerialisationOptions
-from ..protocols import ExpressionParser
+from ..protocols import ParseExpression
 from ..types import SerialisedExpression
 from ..utils import serialise_with_field, to_operator
 from ..validators import validate_boolean, validate_string
@@ -24,7 +24,7 @@ class Exists(Expression):
         return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ParseExpression) -> Self:
         return cls(info.field, validate_boolean(info.argument))
 
 
@@ -41,5 +41,5 @@ class Type(Expression):
         return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ParseExpression) -> Self:
         return cls(info.field, validate_string(info.argument))

@@ -4,11 +4,11 @@ from .expression import Expression
 from .models import ExpressionInfo
 
 
-class ExpressionParser(Protocol):
+class ParseExpression(Protocol):
     def __call__(self, value: Any, /) -> "Expression": ...
 
 
 class ExpressionBuilder(Protocol):
     def __call__(
-        self, info: ExpressionInfo, parse: "ExpressionParser"
+        self, info: ExpressionInfo, parse: "ParseExpression"
     ) -> "Expression": ...
