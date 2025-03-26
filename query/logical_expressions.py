@@ -1,23 +1,31 @@
 from dataclasses import dataclass
-from typing import Any, ClassVar, Optional, Sequence
+from typing import ClassVar, Sequence
 
 from typing_extensions import Self
 
-from .api import Expression
+from .api import Expression, ExpressionInfo, ExpressionParser
 from .types import SerialisedExpression
+from .validators import validate_expressions
 
 
 @dataclass(frozen=True)
 class And(Expression):
-    operator: ClassVar[str] = "$eq"
+    operator: ClassVar[str] = "$and"
 
     expressions: Sequence[Expression]
 
+    # NOTE: KEEP ME? ADD TO OTHERS?
+    def __repr__(self) -> str:
+        pretty_expressions: str = ", ".join(map(repr, self.expressions))
+
+        return f"{type(self).__name__}({pretty_expressions})"
+
     def serialise(self) -> SerialisedExpression:
-        return {self.operator: tuple(map(Expression.serialise, self.expressions))}
+        return {
+            # self.operator: tuple(expression.serialise() for expression in self.expressions)
+            self.operator: [expression.serialise() for expression in self.expressions]
+        }
 
     @classmethod
-    def parse(
-        cls, operator: str, argument: Any, *, field: Optional[str] = None
-    ) -> Self:
-        return cls(field, validate_expressions(argument))
+    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+        return cls(validate_expressions(info.argument, parse))

@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import Any, ClassVar, Final, Optional, Sequence
+from typing import ClassVar, Final, Optional, Sequence
 
 from typing_extensions import Self
 
-from .api import Expression
+from .api import Expression, ExpressionInfo, ExpressionParser
 from .types import Number, SerialisedExpression, Value
 from .validators import validate_number, validate_value, validate_values
 
@@ -26,14 +26,18 @@ class Eq(Expression):
     field: Optional[str]
     value: Value
 
+    # NOTE: KEEP ME? ADD TO OTHERS?
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.field!r}, {self.value!r})"
+
     def serialise(self) -> SerialisedExpression:
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def parse(
-        cls, operator: str, argument: Any, *, field: Optional[str] = None
+    def build(
+        cls, info: ExpressionInfo, parse: ExpressionParser
     ) -> Self:
-        return cls(field, validate_value(argument))
+        return cls(info.field, validate_value(info.argument))
 
 
 @dataclass(frozen=True)
@@ -47,10 +51,10 @@ class Gt(Expression):
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def parse(
-        cls, operator: str, argument: Any, *, field: Optional[str] = None
+    def build(
+        cls, info: ExpressionInfo, parse: ExpressionParser
     ) -> Self:
-        return cls(field, validate_number(argument))
+        return cls(info.field, validate_number(info.argument))
 
 
 @dataclass(frozen=True)
@@ -64,10 +68,10 @@ class Gte(Expression):
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def parse(
-        cls, operator: str, argument: Any, *, field: Optional[str] = None
+    def build(
+        cls, info: ExpressionInfo, parse: ExpressionParser
     ) -> Self:
-        return cls(field, validate_number(argument))
+        return cls(info.field, validate_number(info.argument))
 
 
 @dataclass(frozen=True)
@@ -81,10 +85,10 @@ class In(Expression):
         return with_field(self.field, {self.operator: self.values})
 
     @classmethod
-    def parse(
-        cls, operator: str, argument: Any, *, field: Optional[str] = None
+    def build(
+        cls, info: ExpressionInfo, parse: ExpressionParser
     ) -> Self:
-        return cls(field, validate_values(argument))
+        return cls(info.field, validate_values(info.argument))
 
 
 @dataclass(frozen=True)
@@ -98,10 +102,10 @@ class Lt(Expression):
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def parse(
-        cls, operator: str, argument: Any, *, field: Optional[str] = None
+    def build(
+        cls, info: ExpressionInfo, parse: ExpressionParser
     ) -> Self:
-        return cls(field, validate_number(argument))
+        return cls(info.field, validate_number(info.argument))
 
 
 @dataclass(frozen=True)
@@ -115,10 +119,10 @@ class Lte(Expression):
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def parse(
-        cls, operator: str, argument: Any, *, field: Optional[str] = None
+    def build(
+        cls, info: ExpressionInfo, parse: ExpressionParser
     ) -> Self:
-        return cls(field, validate_number(argument))
+        return cls(info.field, validate_number(info.argument))
 
 
 @dataclass(frozen=True)
@@ -132,10 +136,10 @@ class Ne(Expression):
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def parse(
-        cls, operator: str, argument: Any, *, field: Optional[str] = None
+    def build(
+        cls, info: ExpressionInfo, parse: ExpressionParser
     ) -> Self:
-        return cls(field, validate_number(argument))
+        return cls(info.field, validate_number(info.argument))
 
 
 @dataclass(frozen=True)
@@ -149,7 +153,7 @@ class Nin(Expression):
         return with_field(self.field, {self.operator: self.values})
 
     @classmethod
-    def parse(
-        cls, operator: str, argument: Any, *, field: Optional[str] = None
+    def build(
+        cls, info: ExpressionInfo, parse: ExpressionParser
     ) -> Self:
-        return cls(field, validate_values(argument))
+        return cls(info.field, validate_values(info.argument))

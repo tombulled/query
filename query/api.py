@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional, Protocol, TypeVar
 
@@ -18,9 +19,20 @@ class StrEnum(str, Enum):
 #     AND = "$and"
 
 
+@dataclass
+class ExpressionInfo:
+    operator: str
+    argument: Any
+    field: Optional[str] = None
+
+
 class ExpressionParser(Protocol):
+    def __call__(self, value: Any, /) -> "Expression": ...
+
+
+class ExpressionBuilder(Protocol):
     def __call__(
-        self, operator: str, argument: Any, *, field: Optional[str] = None
+        self, info: ExpressionInfo, parse: "ExpressionParser"
     ) -> "Expression": ...
 
 
