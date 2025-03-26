@@ -3,12 +3,11 @@ from typing import ClassVar, Optional, Sequence
 
 from typing_extensions import Self
 
-from .api import Expression
-from .models import ExpressionInfo, SerialisationOptions
-from .protocols import ExpressionParser
-from .types import Number, SerialisedExpression, Value
-from .utils import serialise_with_field, to_operator
-from .validators import validate_number, validate_value, validate_values
+from ..expression import Expression
+from ..models import ExpressionInfo, SerialisationOptions
+from ..types import Number, SerialisedExpression, Value
+from ..utils import serialise_with_field, to_operator
+from ..validators import validate_number, validate_value, validate_values
 
 
 @dataclass(frozen=True)
@@ -25,7 +24,7 @@ class Eq(Expression):
         return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, _) -> Self:
         return cls(info.field, validate_value(info.argument))
 
 
@@ -36,11 +35,11 @@ class Gt(Expression):
     field: Optional[str]
     value: Number
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
+    def serialise(self, _) -> SerialisedExpression:
         return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, _) -> Self:
         return cls(info.field, validate_number(info.argument))
 
 
@@ -51,11 +50,11 @@ class Gte(Expression):
     field: Optional[str]
     value: Number
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
+    def serialise(self, _) -> SerialisedExpression:
         return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, _) -> Self:
         return cls(info.field, validate_number(info.argument))
 
 
@@ -66,11 +65,11 @@ class In(Expression):
     field: Optional[str]
     values: Sequence[Value]
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
+    def serialise(self, _) -> SerialisedExpression:
         return serialise_with_field(self.field, {self.operator: self.values})
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, _) -> Self:
         return cls(info.field, validate_values(info.argument))
 
 
@@ -81,11 +80,11 @@ class Lt(Expression):
     field: Optional[str]
     value: Number
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
+    def serialise(self, _) -> SerialisedExpression:
         return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, _) -> Self:
         return cls(info.field, validate_number(info.argument))
 
 
@@ -96,11 +95,11 @@ class Lte(Expression):
     field: Optional[str]
     value: Number
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
+    def serialise(self, _) -> SerialisedExpression:
         return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, _) -> Self:
         return cls(info.field, validate_number(info.argument))
 
 
@@ -111,11 +110,11 @@ class Ne(Expression):
     field: Optional[str]
     value: Number
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
+    def serialise(self, _) -> SerialisedExpression:
         return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, _) -> Self:
         return cls(info.field, validate_number(info.argument))
 
 
@@ -126,9 +125,9 @@ class Nin(Expression):
     field: Optional[str]
     values: Sequence[Value]
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
+    def serialise(self, _) -> SerialisedExpression:
         return serialise_with_field(self.field, {self.operator: self.values})
 
     @classmethod
-    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
+    def build(cls, info: ExpressionInfo, _) -> Self:
         return cls(info.field, validate_values(info.argument))

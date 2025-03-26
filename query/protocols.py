@@ -1,6 +1,6 @@
 from typing import Any, Protocol
 
-from .api import Expression
+from .expression import Expression
 from .models import ExpressionInfo
 
 

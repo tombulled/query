@@ -1,9 +1,8 @@
 from typing import Any, Mapping, MutableSequence, Optional, Sequence
 
-from .api import Expression
-from .comparison_expressions import Eq, Gt, Gte, In, Lt, Lte, Ne, Nin
 from .exceptions import ParseError
-from .logical_expressions import And
+from .expression import Expression
+from .expressions import And, Eq, Exists, Gt, Gte, In, Lt, Lte, Ne, Nin, Type
 from .models import ExpressionInfo
 from .protocols import ExpressionBuilder
 from .utils import is_operator, serialise_with_field
@@ -20,6 +19,9 @@ EXPRESSION_BUILDERS: Mapping[str, ExpressionBuilder] = {
     Nin.operator: Nin.build,
     # Logical
     And.operator: And.build,
+    # Element
+    Exists.operator: Exists.build,
+    Type.operator: Type.build,
 }
 
 
@@ -49,14 +51,14 @@ def _parse_value_or_expression(field: Optional[str], value: Any) -> Expression:
 def parse(expression: Any, /, *, field: Optional[str] = None) -> Expression:
     # 1. Not a mapping
     if not isinstance(expression, Mapping):
-        raise TypeError
+        raise ParseError("Expression is not a mapping")
 
     # 2. Keys are not strings
     keys: Sequence[str] = _validate_keys(expression)
 
     # 3. No keys in mapping
     if len(keys) == 0:
-        raise ValueError
+        raise ParseError("Expression is an empty mapping (no keys)")
 
     # 4. Multiple keys in mapping - implicit and
     if len(keys) > 1:

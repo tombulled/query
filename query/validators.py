@@ -1,17 +1,28 @@
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence, TypeVar
 
-from .api import Expression
+from .exceptions import ValidationError
+from .expression import Expression
 from .protocols import ExpressionParser
-from .types import Callable, Number, TypeVar, Value
+from .types import Number, Value
 
 T = TypeVar("T")
+C = TypeVar("C", bound=type)
 
 
-def _validate_sequence(value: Any, validate_item: Callable[[Any], T]) -> Sequence[T]:
+def _validate_sequence(
+    value: Any, validate_item: Callable[[Any], T]
+) -> Sequence[T]:
     if not isinstance(value, Sequence):
-        raise TypeError
+        raise ValidationError
 
     return tuple(map(validate_item, value))
+
+
+def validate(value: Any, type_: C, /) -> C:
+    if not isinstance(value, type_):
+        raise ValidationError
+
+    return value
 
 
 def validate_value(value: Any, /) -> Value:
@@ -24,7 +35,7 @@ def validate_values(value: Any, /) -> Sequence[Value]:
 
 def validate_number(value: Any, /) -> Number:
     if not isinstance(value, (int, float)):
-        raise TypeError
+        raise ValidationError
 
     return value
 
@@ -36,4 +47,14 @@ def validate_expression(value: Any, parse: ExpressionParser, /) -> Expression:
 def validate_expressions(
     value: Any, parse: ExpressionParser, /
 ) -> Sequence[Expression]:
-    return _validate_sequence(value, lambda item: validate_expression(item, parse))
+    return _validate_sequence(
+        value, lambda item: validate_expression(item, parse)
+    )
+
+
+def validate_boolean(value: Any, /) -> bool:
+    return validate(value, bool)
+
+
+def validate_string(value: Any, /) -> str:
+    return validate(value, str)

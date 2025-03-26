@@ -3,11 +3,11 @@ from typing import Any, ClassVar, MutableMapping, Sequence
 
 from typing_extensions import Self
 
-from .api import Expression
-from .models import ExpressionInfo, SerialisationOptions
-from .protocols import ExpressionParser
-from .types import SerialisedExpression
-from .validators import validate_expressions
+from ..expression import Expression
+from ..models import ExpressionInfo, SerialisationOptions
+from ..protocols import ExpressionParser
+from ..types import SerialisedExpression
+from ..validators import validate_expressions
 
 
 @dataclass(frozen=True)
