@@ -6,7 +6,6 @@ from .protocols import ParseExpression
 from .types import Number, Value
 
 T = TypeVar("T")
-# C = TypeVar("C", bound=type)
 
 
 def _validate_sequence(

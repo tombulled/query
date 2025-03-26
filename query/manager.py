@@ -1,9 +1,11 @@
 from dataclasses import dataclass, field
-from typing import Any, Callable, MutableMapping, Protocol, TypeVar
+from typing import Any, Callable, MutableMapping, Optional, Protocol, TypeVar
 
 from .expression import Expression
+from .models import SerialisationOptions
 from .parse import ExpressionParser
 from .protocols import ExpressionBuilder
+from .types import SerialisedExpression
 
 
 class HasExpressionBuilder(Protocol):
@@ -34,5 +36,13 @@ class Expressions:
     ) -> None:
         self.expressions[operator] = expression_builder
 
-    def parse(self, expression: Any) -> Expression:
+    def parse(self, expression: Any, /) -> Expression:
         return ExpressionParser(self.expressions).parse(expression)
+
+    def serialise(
+        self, expression: Expression, /, options: Optional[SerialisationOptions] = None
+    ) -> SerialisedExpression:
+        if options is None:
+            options = SerialisationOptions()
+
+        return expression.serialise(options)
