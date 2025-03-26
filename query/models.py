@@ -11,7 +11,9 @@ class ExpressionInfo:
 
 @dataclass
 class SerialisationOptions:
+    # Whether to include the field in the serialised output.
+    # For example: {<field>: {$eq: <value>}} vs {$eq: <value>}
     include_field: bool = True
-    implicit: bool = (
-        False  # mode = SIMPLE, COMPLEX, DEFAULT? (short, full, auto)
-    )
+    # Whether to serialise into the implicit form of this expression.
+    # For example: {<field>: <value>} is the implicit form of {<field>: {$eq: <value>}}
+    implicit: bool = False

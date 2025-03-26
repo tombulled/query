@@ -1,12 +1,12 @@
 from typing import Any, Mapping, MutableSequence, Optional, Sequence
 
-from query.api import (
-    Expression,
-    ExpressionBuilder,
-    ExpressionInfo,
-)
-from query.comparison_expressions import Eq, Gt, Gte, In, Lt, Lte, Ne, Nin
-from query.logical_expressions import And
+from .api import Expression
+from .comparison_expressions import Eq, Gt, Gte, In, Lt, Lte, Ne, Nin
+from .exceptions import ParseError
+from .logical_expressions import And
+from .models import ExpressionInfo
+from .protocols import ExpressionBuilder
+from .utils import is_operator, serialise_with_field
 
 EXPRESSION_BUILDERS: Mapping[str, ExpressionBuilder] = {
     # Comparison
@@ -28,7 +28,7 @@ def _validate_keys(mapping: Mapping, /) -> Sequence[str]:
 
     for key in mapping:
         if not isinstance(key, str):
-            raise TypeError
+            raise ParseError(f"Mapping key {key!r} is not a string")
 
         keys.append(key)
 
@@ -36,17 +36,14 @@ def _validate_keys(mapping: Mapping, /) -> Sequence[str]:
 
 
 def _parse_value_or_expression(field: Optional[str], value: Any) -> Expression:
-    # 1. Not a mapping - is a literal value
+    # 1. Expression
     if isinstance(value, Mapping) and any(
         isinstance(key, str) and key.startswith("$") for key in value
     ):
         return parse(value, field=field)
 
-    # Literal value
-    if field is None:
-        return parse({Eq.operator: value})
-    else:
-        return parse({field: {Eq.operator: value}})
+    # 2. Literal value
+    return parse(serialise_with_field(field, {Eq.operator: value}))
 
 
 def parse(expression: Any, /, *, field: Optional[str] = None) -> Expression:
@@ -60,11 +57,10 @@ def parse(expression: Any, /, *, field: Optional[str] = None) -> Expression:
     # 3. No keys in mapping
     if len(keys) == 0:
         raise ValueError
+
     # 4. Multiple keys in mapping - implicit and
-    elif len(keys) > 1:
-        expressions: Sequence[Mapping[str,]] = [
-            {k: v} for k, v in expression.items()
-        ]
+    if len(keys) > 1:
+        expressions: Sequence[Mapping[str,]] = [{k: v} for k, v in expression.items()]
 
         return parse({And.operator: expressions})
 
@@ -72,7 +68,7 @@ def parse(expression: Any, /, *, field: Optional[str] = None) -> Expression:
     value: Any = expression[key]
 
     # 5. Field expression
-    if not key.startswith("$"):
+    if not is_operator(key):
         return _parse_value_or_expression(key, value)
 
     expression_builder: ExpressionBuilder = EXPRESSION_BUILDERS[key]
