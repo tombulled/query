@@ -36,7 +36,16 @@ class ExpressionBuilder(Protocol):
     ) -> "Expression": ...
 
 
+@dataclass
+class SerialisationOptions:
+    include_field: bool = True
+    implicit: bool = False
+    # mode = SIMPLE, COMPLEX, DEFAULT? (short, full, auto)
+
+
 class Expression(ABC):
     @abstractmethod
-    def serialise(self) -> SerialisedExpression:
+    def serialise(
+        self, options: SerialisationOptions, /
+    ) -> SerialisedExpression:
         raise NotImplementedError

@@ -3,10 +3,11 @@ from typing import ClassVar, Final, Optional, Sequence
 
 from typing_extensions import Self
 
-from .api import Expression, ExpressionInfo, ExpressionParser
+from .api import Expression, ExpressionInfo, ExpressionParser, SerialisationOptions
 from .types import Number, SerialisedExpression, Value
 from .validators import validate_number, validate_value, validate_values
 
+OPERATOR_PREFIX: Final[str] = "$"
 PLACEHOLDER: Final[str] = "???"
 
 
@@ -27,10 +28,13 @@ class Eq(Expression):
     value: Value
 
     # NOTE: KEEP ME? ADD TO OTHERS?
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}({self.field!r}, {self.value!r})"
+    # def __repr__(self) -> str:
+    #     return f"{type(self).__name__}({self.field!r}, {self.value!r})"
 
-    def serialise(self) -> SerialisedExpression:
+    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
+        if options.implicit:
+            return {self.field: self.value}
+
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
@@ -47,7 +51,7 @@ class Gt(Expression):
     field: Optional[str]
     value: Number
 
-    def serialise(self) -> SerialisedExpression:
+    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
@@ -64,7 +68,7 @@ class Gte(Expression):
     field: Optional[str]
     value: Number
 
-    def serialise(self) -> SerialisedExpression:
+    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
@@ -81,7 +85,7 @@ class In(Expression):
     field: Optional[str]
     values: Sequence[Value]
 
-    def serialise(self) -> SerialisedExpression:
+    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
         return with_field(self.field, {self.operator: self.values})
 
     @classmethod
@@ -98,7 +102,7 @@ class Lt(Expression):
     field: Optional[str]
     value: Number
 
-    def serialise(self) -> SerialisedExpression:
+    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
@@ -115,7 +119,7 @@ class Lte(Expression):
     field: Optional[str]
     value: Number
 
-    def serialise(self) -> SerialisedExpression:
+    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
@@ -132,7 +136,7 @@ class Ne(Expression):
     field: Optional[str]
     value: Number
 
-    def serialise(self) -> SerialisedExpression:
+    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
         return with_field(self.field, {self.operator: self.value})
 
     @classmethod
@@ -149,7 +153,7 @@ class Nin(Expression):
     field: Optional[str]
     values: Sequence[Value]
 
-    def serialise(self) -> SerialisedExpression:
+    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
         return with_field(self.field, {self.operator: self.values})
 
     @classmethod

@@ -1,49 +1,14 @@
-from typing import Any, Mapping, Sequence
-
-from query.api import Expression, ExpressionBuilder, ExpressionInfo
+from query.api import (
+    Expression,
+    SerialisationOptions,
+    SerialisedExpression,
+)
 from query.comparison_expressions import Eq, Gt, Gte, In, Lt, Lte, Ne, Nin
-from query.logical_expressions import And
-
-"""
-{ <field> : { <operator> : <value> }}
-"""
-
-EXPRESSION_BUILDERS: Mapping[str, ExpressionBuilder] = {
-    # Comparison
-    Eq.operator: Eq.build,
-    Gt.operator: Gt.build,
-    Gte.operator: Gte.build,
-    In.operator: In.build,
-    Lt.operator: Lt.build,
-    Lte.operator: Lte.build,
-    Ne.operator: Ne.build,
-    Nin.operator: Nin.build,
-    # Logical
-    And.operator: And.build,
-}
+from query.parse import parse
 
 
-def parse(value: Any, /) -> Expression:
-    if not isinstance(value, Mapping):
-        raise TypeError
-
-    keys: Sequence[str] = tuple(value.keys())
-
-    if len(keys) != 1:
-        raise ValueError
-
-    key: str = keys[0]
-    val: Any = value[key]
-
-    expression_builder: ExpressionBuilder = EXPRESSION_BUILDERS[key]
-
-    info: ExpressionInfo = ExpressionInfo(
-        operator=key,
-        argument=val,
-        field=None,
-    )
-
-    return expression_builder(info, parse)
+def serialise(expression: Expression, /) -> SerialisedExpression:
+    return expression.serialise(SerialisationOptions())
 
 
 eq = Eq("name", "bob")
@@ -55,4 +20,5 @@ lte = Lte("age", 10)
 ne = Ne("age", 10)
 nin = Nin("age", (10, 20))
 
-d = parse({"$and": [{"$eq": "bob"}, {"$eq": "sally"}]})
+d = parse({"$and": [{"name": {"$eq": "bob"}}, {"age": {"$gt": 25}}]})
+d2 = parse({"name": "bob", "age": {"$gt": 25}})
