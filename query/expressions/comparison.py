@@ -19,6 +19,8 @@ class Eq(Expression):
 
     def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
         if options.implicit:
+            assert self.field is not None
+
             return {self.field: self.value}
 
         return serialise_with_field(self.field, {self.operator: self.value})

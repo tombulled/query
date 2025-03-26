@@ -1,4 +1,4 @@
-from typing import Any, Callable, Sequence, TypeVar
+from typing import Any, Callable, Sequence, Type, TypeVar
 
 from .exceptions import ValidationError
 from .expression import Expression
@@ -6,7 +6,7 @@ from .protocols import ParseExpression
 from .types import Number, Value
 
 T = TypeVar("T")
-C = TypeVar("C", bound=type)
+# C = TypeVar("C", bound=type)
 
 
 def _validate_sequence(
@@ -18,7 +18,7 @@ def _validate_sequence(
     return tuple(map(validate_item, value))
 
 
-def validate(value: Any, type_: C, /) -> C:
+def validate(value: Any, type_: Type[T], /) -> T:
     if not isinstance(value, type_):
         raise ValidationError
 

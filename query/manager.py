@@ -2,13 +2,11 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, MutableMapping, Protocol, TypeVar
 
 from .expression import Expression
-from .protocols import ExpressionBuilder, ParseExpression
 from .parse import ExpressionParser
+from .protocols import ExpressionBuilder
 
 
 class HasExpressionBuilder(Protocol):
-    # @classmethod
-    # def build(cls, info: ExpressionInfo, parse: ParseExpression) -> Self: ...
     build: ExpressionBuilder
 
 
@@ -35,10 +33,6 @@ class Expressions:
         self, operator: str, expression_builder: ExpressionBuilder
     ) -> None:
         self.expressions[operator] = expression_builder
-
-    # @property
-    # def parser(self) -> ExpressionParser:
-    #     return ExpressionParser(self.expressions)
 
     def parse(self, expression: Any) -> Expression:
         return ExpressionParser(self.expressions).parse(expression)

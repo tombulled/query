@@ -3,7 +3,7 @@ from typing import Any, Mapping, MutableSequence, Optional, Sequence
 
 from .exceptions import ParseError
 from .expression import Expression
-from .expressions import And, Eq, Exists, Gt, Gte, In, Lt, Lte, Ne, Nin, Type
+from .expressions import And, Eq
 from .models import ExpressionInfo
 from .protocols import ExpressionBuilder
 from .utils import is_operator, serialise_with_field
@@ -47,14 +47,16 @@ class ExpressionParser:
     ) -> Expression:
         # 1. Expression
         if isinstance(value, Mapping) and any(
-            isinstance(key, str) and key.startswith("$") for key in value
+            isinstance(key, str) and is_operator(key) for key in value
         ):
             return self.parse(value, field=field)
 
         # 2. Literal value
         return self.parse(serialise_with_field(field, {Eq.operator: value}))
 
-    def parse(self, expression: Any, /, *, field: Optional[str] = None) -> Expression:
+    def parse(
+        self, expression: Any, /, *, field: Optional[str] = None
+    ) -> Expression:
         # 1. Not a mapping
         if not isinstance(expression, Mapping):
             raise ParseError("Expression is not a mapping")
@@ -68,7 +70,7 @@ class ExpressionParser:
 
         # 4. Multiple keys in mapping - implicit and
         if len(keys) > 1:
-            expressions: Sequence[Mapping[str,]] = [
+            expressions: Sequence[Mapping[str, Any]] = [
                 {k: v} for k, v in expression.items()
             ]
 
