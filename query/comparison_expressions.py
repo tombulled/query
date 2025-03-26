@@ -1,17 +1,19 @@
 from dataclasses import dataclass
-from typing import ClassVar, Final, Optional, Sequence
+from typing import ClassVar, Optional, Sequence
 
 from typing_extensions import Self
 
-from .api import Expression, ExpressionInfo, ExpressionParser, SerialisationOptions
+from .api import (
+    Expression,
+    ExpressionParser,
+)
+from .models import ExpressionInfo, SerialisationOptions
 from .types import Number, SerialisedExpression, Value
+from .utils import to_operator
 from .validators import validate_number, validate_value, validate_values
 
-OPERATOR_PREFIX: Final[str] = "$"
-PLACEHOLDER: Final[str] = "???"
 
-
-def with_field(
+def serialise_with_field(
     field: Optional[str], expression: SerialisedExpression
 ) -> SerialisedExpression:
     if field is None:
@@ -22,142 +24,138 @@ def with_field(
 
 @dataclass(frozen=True)
 class Eq(Expression):
-    operator: ClassVar[str] = "$eq"
+    operator: ClassVar[str] = to_operator("eq")
 
     field: Optional[str]
     value: Value
 
-    # NOTE: KEEP ME? ADD TO OTHERS?
-    # def __repr__(self) -> str:
-    #     return f"{type(self).__name__}({self.field!r}, {self.value!r})"
-
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
+    def serialise(
+        self, options: SerialisationOptions, /
+    ) -> SerialisedExpression:
         if options.implicit:
             return {self.field: self.value}
 
-        return with_field(self.field, {self.operator: self.value})
+        return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(
-        cls, info: ExpressionInfo, parse: ExpressionParser
-    ) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
         return cls(info.field, validate_value(info.argument))
 
 
 @dataclass(frozen=True)
 class Gt(Expression):
-    operator: ClassVar[str] = "$gt"
+    operator: ClassVar[str] = to_operator("gt")
 
     field: Optional[str]
     value: Number
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
-        return with_field(self.field, {self.operator: self.value})
+    def serialise(
+        self, options: SerialisationOptions, /
+    ) -> SerialisedExpression:
+        return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(
-        cls, info: ExpressionInfo, parse: ExpressionParser
-    ) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
         return cls(info.field, validate_number(info.argument))
 
 
 @dataclass(frozen=True)
 class Gte(Expression):
-    operator: ClassVar[str] = "$gte"
+    operator: ClassVar[str] = to_operator("gte")
 
     field: Optional[str]
     value: Number
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
-        return with_field(self.field, {self.operator: self.value})
+    def serialise(
+        self, options: SerialisationOptions, /
+    ) -> SerialisedExpression:
+        return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(
-        cls, info: ExpressionInfo, parse: ExpressionParser
-    ) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
         return cls(info.field, validate_number(info.argument))
 
 
 @dataclass(frozen=True)
 class In(Expression):
-    operator: ClassVar[str] = "$in"
+    operator: ClassVar[str] = to_operator("in")
 
     field: Optional[str]
     values: Sequence[Value]
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
-        return with_field(self.field, {self.operator: self.values})
+    def serialise(
+        self, options: SerialisationOptions, /
+    ) -> SerialisedExpression:
+        return serialise_with_field(self.field, {self.operator: self.values})
 
     @classmethod
-    def build(
-        cls, info: ExpressionInfo, parse: ExpressionParser
-    ) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
         return cls(info.field, validate_values(info.argument))
 
 
 @dataclass(frozen=True)
 class Lt(Expression):
-    operator: ClassVar[str] = "$lt"
+    operator: ClassVar[str] = to_operator("lt")
 
     field: Optional[str]
     value: Number
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
-        return with_field(self.field, {self.operator: self.value})
+    def serialise(
+        self, options: SerialisationOptions, /
+    ) -> SerialisedExpression:
+        return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(
-        cls, info: ExpressionInfo, parse: ExpressionParser
-    ) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
         return cls(info.field, validate_number(info.argument))
 
 
 @dataclass(frozen=True)
 class Lte(Expression):
-    operator: ClassVar[str] = "$lte"
+    operator: ClassVar[str] = to_operator("lte")
 
     field: Optional[str]
     value: Number
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
-        return with_field(self.field, {self.operator: self.value})
+    def serialise(
+        self, options: SerialisationOptions, /
+    ) -> SerialisedExpression:
+        return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(
-        cls, info: ExpressionInfo, parse: ExpressionParser
-    ) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
         return cls(info.field, validate_number(info.argument))
 
 
 @dataclass(frozen=True)
 class Ne(Expression):
-    operator: ClassVar[str] = "$ne"
+    operator: ClassVar[str] = to_operator("ne")
 
     field: Optional[str]
     value: Number
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
-        return with_field(self.field, {self.operator: self.value})
+    def serialise(
+        self, options: SerialisationOptions, /
+    ) -> SerialisedExpression:
+        return serialise_with_field(self.field, {self.operator: self.value})
 
     @classmethod
-    def build(
-        cls, info: ExpressionInfo, parse: ExpressionParser
-    ) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
         return cls(info.field, validate_number(info.argument))
 
 
 @dataclass(frozen=True)
 class Nin(Expression):
-    operator: ClassVar[str] = "$nin"
+    operator: ClassVar[str] = to_operator("nin")
 
     field: Optional[str]
     values: Sequence[Value]
 
-    def serialise(self, options: SerialisationOptions, /) -> SerialisedExpression:
-        return with_field(self.field, {self.operator: self.values})
+    def serialise(
+        self, options: SerialisationOptions, /
+    ) -> SerialisedExpression:
+        return serialise_with_field(self.field, {self.operator: self.values})
 
     @classmethod
-    def build(
-        cls, info: ExpressionInfo, parse: ExpressionParser
-    ) -> Self:
+    def build(cls, info: ExpressionInfo, parse: ExpressionParser) -> Self:
         return cls(info.field, validate_values(info.argument))
